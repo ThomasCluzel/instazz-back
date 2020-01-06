@@ -9,8 +9,10 @@ const postRouter = express.Router();
 postRouter.use(bodyParser.json());
 
 postRouter.get("/", (req, res) => {
+    const page = (req.query.page) ? parseInt(req.query.page) : 1;
+    const per_page = (req.query.per_page) ? parseInt(req.query.per_page) : 10;
     service
-        .getByPage(req.query.page || 1, req.query.per_page || 10)
+        .getByPage(page, per_page)
         .then(posts => res.status(200).json({ posts }));
 });
 
