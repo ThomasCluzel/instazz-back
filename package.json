@@ -1,0 +1,39 @@
+{
+  "name": "instazz-back",
+  "version": "0.1.0",
+  "description": "Backend of the InstaZZ app of the course ZZ3-javascript-ecosystems",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"No test specified\" && exit 0",
+    "start": "node_modules/.bin/nodemon app.js --exec babel-node --"
+  },
+  "keywords": [
+    "test",
+    "Express"
+  ],
+  "author": "Thomas",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "mongoose": "^5.8.1"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.7.5",
+    "@babel/core": "^7.7.5",
+    "@babel/helper-plugin-utils": "^7.0.0",
+    "@babel/node": "^7.7.4",
+    "@babel/plugin-transform-runtime": "^7.7.6",
+    "@babel/preset-env": "^7.7.6",
+    "@babel/runtime": "^7.7.6",
+    "nodemon": "^2.0.2"
+  },
+  "babel": {
+    "presets": [
+      "@babel/preset-env"
+    ],
+    "plugins": [
+      "@babel/plugin-transform-runtime"
+    ]
+  }
+}
