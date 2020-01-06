@@ -2,7 +2,11 @@
 
 This project is the backend of the InstaZZ app of the course ZZ3-javascript-ecosystems
 
-Hello and welcome to the IntaZZ backend repository.
+Throughout this course, we will build a social-network with a
+principle similar to Instagram.
+
+_Disclaimer_: this is not a copy of Instagram, this project is made by students
+for learning purpose only.
 
 ## Some useful commands
 

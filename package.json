@@ -11,7 +11,7 @@
     "test",
     "Express"
   ],
-  "author": "Thomas",
+  "author": "Thomas Cluzel et Bruno Jousse",
   "license": "ISC",
   "dependencies": {
     "dotenv": "^8.2.0",
