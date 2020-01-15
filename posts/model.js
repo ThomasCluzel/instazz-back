@@ -5,6 +5,10 @@ const Schema = mongoose.Schema;
 
 var PostSchema = new Schema({
   description: String,
+  image: {
+    type: String,
+    required: false
+  },
   author: {
     name: String,
     ref: { type: Schema.Types.ObjectId, ref: "User" },

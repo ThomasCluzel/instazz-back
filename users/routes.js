@@ -25,15 +25,30 @@ userRouter.get("", (req, res) => {
 userRouter.post("", (req, res) => {
     if(req.body && !req.body._id){
         service.createUser(req.body)
-            .then(
-                users => res.status(200).json(users),
-                err => {
-                    console.error("User.getByPage: "+err+" "+err.message())
-                    res.status(500).send("error");
-                    return;
+        .then(
+            users => res.status(200).json(users),
+            err => {
+                console.error("User.getByPage: "+err+" "+err.message())
+                res.status(500).send("error");
+                return;
             }
         )
     }
 });
+
+//POST
+userRouter.post("/signin", (req, res) => {
+    if(req.body && !req.body._id){
+        service.signIn(req.body)
+        .then(
+            username => res.status(200).json(username),
+            err => {
+                console.error("Couldn't connect: "+err )
+                res.status(500).send("error")
+                return;
+            }
+        )
+    }
+})
 
 export default userRouter;
