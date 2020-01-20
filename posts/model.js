@@ -3,15 +3,25 @@
 import mongoose from "mongoose";
 const Schema = mongoose.Schema;
 
+var ImageSchema = new Schema({
+  data: Buffer,
+  contentType: String,
+  filename: String
+});
+
+let Image = mongoose.model("Image", ImageSchema);
+export {Image};
+
 var PostSchema = new Schema({
   description: String,
-  image: {
-    type: String,
-    required: false
-  },
   author: {
     name: String,
     ref: { type: Schema.Types.ObjectId, ref: "User" },
+  },
+  image: {
+    type: Schema.Types.ObjectId, 
+    ref: "Image",
+    required: true
   }
 });
 

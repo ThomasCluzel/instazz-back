@@ -1,15 +1,13 @@
 // Services for posts
 
-import Post from "./model";
+import {Image, Post} from "./model";
 
 // Create
-export async function createPost(post) {
-    if (post) {
-        if (!post._id) {
-            console.log("[post] - Creation");
-            return Post.create({ ...post });
-        }
-    }
+export async function createPost(post, img) {
+    var imgRef = Image.create({...img})
+    post["image"] = imgRef;
+    console.log("[post] - Creation");
+    return Post.create({ ...post });
 };
 
 // Read
