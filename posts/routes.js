@@ -27,7 +27,7 @@ postRouter.get("/", (req, res) => {
 postRouter.post("/", upload.single("photo"), (req, res) => {
     if(req.body && !req.body._id && req.file){
         var image;
-        image.data = req.file.buffer;
+        image.data = req.file.path;
         image.contentType = req.file.mimetype;
         image.filename = req.file.originalname;
         service.createPost(req.body, image).then(

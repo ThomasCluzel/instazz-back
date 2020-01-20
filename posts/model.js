@@ -4,7 +4,7 @@ import mongoose from "mongoose";
 const Schema = mongoose.Schema;
 
 var ImageSchema = new Schema({
-  data: Buffer,
+  data: String,
   contentType: String,
   filename: String
 });
