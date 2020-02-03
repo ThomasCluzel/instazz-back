@@ -5,11 +5,34 @@ import bodyParser from "body-parser";
 import multer from "multer";
 import fs from "fs";
 import * as service from './services';
+import { verifyJWT_MW, verifyJWT_Connected, verifyJWT_isConnected } from "../libs/auth"
 
 const postRouter = express.Router();
 postRouter.use(bodyParser.json());
-var upload = multer({ 
-    dest: './uploads/'
+
+//Image upload
+const storage = multer.diskStorage({
+    destination: function(req, file, cb){
+        cb(null, './uploads/');
+    },
+    filename: function(req, file, cb){
+        cb(null, Date.now() + file.originalname);
+    }
+})
+const fileFilter = (req, file, cb) => {
+    if(file.mimetype === "image/jpeg" || file.mimetype === "image/png"){
+        cb(null, true);
+    }
+    else{
+        cb(null, false);
+    }
+}
+const upload = multer({ 
+    storage: storage,
+    limits: {
+        fileSize: 1024 * 1024 * 5
+    },
+    fileFilter: fileFilter
 })
 
 postRouter.get("/", (req, res) => {
@@ -24,7 +47,8 @@ postRouter.get("/", (req, res) => {
         });
 });
 
-postRouter.post("/", upload.single("photo"), (req, res) => {
+postRouter.post("/", upload.single("imageData"), (req, res) => {
+    console.log("post your post");
     if(req.body && !req.body._id && req.file){
         var image;
         image.data = req.file.path;
@@ -41,6 +65,8 @@ postRouter.post("/", upload.single("photo"), (req, res) => {
             }
         );
     }
-});
+}
+, verifyJWT_isConnected
+);
 
 export default postRouter;

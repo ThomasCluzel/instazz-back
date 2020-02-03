@@ -23,6 +23,7 @@ app.use('/api/v1/users', userRouter);
 app.use("/uploads", express.static('uploads'));
 app.use(allowCrossDomain);
 
+
 // Database mongoose
 mongoose.connect(
     process.env.MONGO,

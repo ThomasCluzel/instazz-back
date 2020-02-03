@@ -10,7 +10,11 @@ var UserSchema = new Schema({
         index: true,
         unique: true
     },
-    password: String
+    password: String,
+    role: {
+        type: String,
+        default: "user"
+    }
 });
 
 UserSchema.index({ name: 1 });

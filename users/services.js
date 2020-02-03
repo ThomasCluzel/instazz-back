@@ -21,11 +21,11 @@ export async function getByPage(page, per_page) {
 
 //Connection
 export async function signIn(body){
-    let result = await User.findOne({"name": body.pseudo})
+    let result = await User.findOne({"pseudo": body.pseudo})
     body.password = hashString(body.password)
     if(body.password == result.password){
         console.log("User "+body.pseudo+" connected.")
-        return body.pseudo
+        return body;
     }
     else{
         throw Error("Wrong user or password");

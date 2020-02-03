@@ -3,6 +3,7 @@
 import mongoose from "mongoose";
 const Schema = mongoose.Schema;
 
+//TODO: Change mongoDB schema to JSON Object
 var ImageSchema = new Schema({
   data: String,
   contentType: String,
