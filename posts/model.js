@@ -5,9 +5,19 @@ const Schema = mongoose.Schema;
 
 //TODO: Change mongoDB schema to JSON Object
 var ImageSchema = new Schema({
-  data: String,
-  contentType: String,
-  filename: String
+  data: {
+    type: String,
+    required: true
+  },
+  contentType: {
+    type: String,
+    required: true
+  },
+  filename: {
+    type: String,
+    required: true,
+    unique: true
+  }
 });
 
 let Image = mongoose.model("Image", ImageSchema);
@@ -16,8 +26,9 @@ export {Image};
 var PostSchema = new Schema({
   description: String,
   author: {
-    name: String,
-    ref: { type: Schema.Types.ObjectId, ref: "User" },
+    type: Schema.Types.ObjectId, 
+    ref: "User",
+    required: true
   },
   image: {
     type: Schema.Types.ObjectId, 
@@ -29,4 +40,4 @@ var PostSchema = new Schema({
 PostSchema.index({ name: 1 });
 let Post = mongoose.model("Post", PostSchema);
 
-export default Post;
+export {Post};

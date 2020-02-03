@@ -16,8 +16,8 @@ userRouter.get("/", (req, res) => {
     service.getByPage(page, per_page)
         .then(users => res.status(200).json({ users }))
         .catch(function(err){
-            console.error("User.getByPage: "+err+" "+err.message())
-            res.status(500).send("error");
+            console.error("User.getByPage: "+err)
+            res.status(500).send("error: " + err);
             return;
         });
     }
@@ -31,8 +31,8 @@ userRouter.post("/", (req, res) => {
         .then(
             users => res.status(200).json(users),
             err => {
-                res.status(500).send("error");
-                console.log("User.createUser: "+err+" "+err.message())
+                res.status(500).send("error: " + err);
+                console.error("User.createUser: "+err)
                 return;
             }
         )
