@@ -8,6 +8,7 @@ import mongoose from "mongoose";
 
 import postRouter from './posts/routes';
 import userRouter from './users/routes';
+import allowCrossDomain from './middleware/accessControl';
 
 dotenv.config();
 
@@ -19,6 +20,8 @@ app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use('/api/v1/posts', postRouter);
 app.use('/api/v1/users', userRouter);
+app.use("/uploads", express.static('uploads'));
+app.use(allowCrossDomain);
 
 // Database mongoose
 mongoose.connect(
