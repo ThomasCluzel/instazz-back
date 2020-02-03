@@ -11,12 +11,14 @@ const postRouter = express.Router();
 postRouter.use(bodyParser.json());
 
 //Image upload
+const fileName = "";
 const storage = multer.diskStorage({
     destination: function(req, file, cb){
         cb(null, './uploads/');
     },
     filename: function(req, file, cb){
-        cb(null, Date.now() + file.originalname);
+        fileName =  Date.now() + file.originalname;
+        cb(null, fileName);
     }
 })
 const fileFilter = (req, file, cb) => {
@@ -53,7 +55,7 @@ postRouter.post("/", upload.single("imageData"), (req, res) => {
         var image;
         image.data = req.file.path;
         image.contentType = req.file.mimetype;
-        image.filename = req.file.originalname;
+        image.filename = fileName;
         service.createPost(req.body, image).then(
             post => {
                 res.status(200).json(post);
@@ -66,7 +68,7 @@ postRouter.post("/", upload.single("imageData"), (req, res) => {
         );
     }
 }
-, verifyJWT_isConnected
+//, verifyJWT_isConnected
 );
 
 export default postRouter;

@@ -21,7 +21,7 @@ userRouter.get("/", (req, res) => {
             return;
         });
     }
-    , verifyJWT_isAdmin
+//    , verifyJWT_isAdmin
 );
 
 // POST
