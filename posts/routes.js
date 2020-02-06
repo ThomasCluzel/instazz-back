@@ -3,7 +3,6 @@
 import express from 'express';
 import bodyParser from "body-parser";
 import multer from "multer";
-import fs from "fs";
 import * as service from './services';
 import { verifyJWT_MW, verifyJWT_Connected, verifyJWT_isConnected } from "../libs/auth"
 
@@ -14,7 +13,7 @@ postRouter.use(bodyParser.json());
 var fileName = "";
 const storage = multer.diskStorage({
     destination: function(req, file, cb){
-        cb(null, './uploads/');
+        cb(null, process.env.UPLOAD_PATH);
     },
     filename: function(req, file, cb){
         fileName =  Date.now() + file.originalname;
@@ -44,8 +43,6 @@ postRouter.get("/", (req, res) => {
         .getByPage(page, per_page)
         .then(posts => {
             res.status(200).json({ posts })
-            res.contentType(post.image.contentType);
-            res.send(post.image.data);
         },
         err => {
             console.error(err);

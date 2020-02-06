@@ -20,7 +20,7 @@ app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use('/api/v1/posts', postRouter);
 app.use('/api/v1/users', userRouter);
-app.use("/uploads", express.static('uploads'));
+app.use(process.env.UPLOAD_PATH, express.static('uploads'));
 app.use(allowCrossDomain);
 
 
