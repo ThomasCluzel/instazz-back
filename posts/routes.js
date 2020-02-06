@@ -10,7 +10,7 @@ const postRouter = express.Router();
 postRouter.use(bodyParser.json());
 
 //Image upload
-var fileName = "";
+let fileName = "";
 const storage = multer.diskStorage({
     destination: function(req, file, cb){
         cb(null, process.env.UPLOAD_PATH);
@@ -53,7 +53,7 @@ postRouter.get("/", (req, res) => {
 postRouter.post("/", upload.single("imageData"), (req, res) => {
     console.log("post your post");
     if(req.body && !req.body._id && req.file){
-        var image = [];
+        let image = [];
         image.data = req.file.path;
         image.contentType = req.file.mimetype;
         image.filename = fileName;

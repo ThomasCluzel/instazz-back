@@ -18,14 +18,14 @@ export async function getByPage(page, per_page) {
     const start = (page - 1) * per_page;
     //Lean permet d'obtenir un objet pur Javascript
     let result = await Post.find({})
-        .populate("image")
-        .populate("author")
+        .populate("image", "data")
+        .populate("author", "pseudo")
         .skip(start)
         .limit(per_page)
         .lean();
     result.forEach(post => { 
-        post.downloadImage = path.join(__dirname, "..", post.image.data)
-        let bitmap = fs.readFileSync(post.downloadImage);
+        const pathImage = path.join(__dirname, "..", post.image.data)
+        let bitmap = fs.readFileSync(pathImage);
         post.imageData = new Buffer.from(bitmap).toString("base64");
         return post;
     });

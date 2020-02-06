@@ -29,7 +29,7 @@ userRouter.post("/", (req, res) => {
     if(req.body && !req.body._id){
         service.createUser(req.body)
         .then(
-            users => res.status(200).json(users),
+            user => res.status(200).json(user.pseudo),
             err => {
                 res.status(500).send("error: " + err);
                 console.error("User.createUser: "+err)

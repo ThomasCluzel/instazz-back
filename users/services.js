@@ -34,8 +34,9 @@ export async function signIn(body){
 
 //Hash a string
 function hashString(password) {
-    var hash = 0, i, chr;
-    if (password.length === 0) return hash;
+    let hash = 0, i, chr;
+    if (password.length === 0) 
+        return hash;
     for (i = 0; i < password.length; i++) {
       chr   = password.charCodeAt(i);
       hash  = ((hash << 5) - hash) + chr;
