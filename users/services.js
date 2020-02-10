@@ -3,8 +3,12 @@
 import User from "./model";
 
 //Create
-export async function createUser(user) {
-    user.password = hashString(user.password)
+export async function createUser(body) {
+    let user = [];
+    console.log(body);
+    user.pseudo = body.pseudo;
+    user.name = body.name;
+    user.password = hashString(body.password)
     console.log("[user] - Creation");
     return User.create({ ...user })
 };
@@ -22,10 +26,14 @@ export async function getByPage(page, per_page) {
 //Connection
 export async function signIn(body){
     let result = await User.findOne({"pseudo": body.pseudo})
-    body.password = hashString(body.password)
-    if(body.password == result.password){
-        console.log("User "+body.pseudo+" connected.")
-        return body;
+    let password = hashString(body.password)
+    if(password == result.password){
+        let user = [];
+        user.pseudo = result.pseudo;
+        user.name = result.name;
+        user.role = result.role;
+        console.log("User "+user.pseudo+" connected.")
+        return user;
     }
     else{
         throw Error("Wrong user or password");

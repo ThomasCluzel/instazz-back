@@ -52,6 +52,7 @@ export function verifyJWT_isConnected(req, res, next) {
   let token = req.headers.authorization;
   verifyJWTToken(token)
     .then(decodedToken => {
+      console.log(decodedToken);
       req.user = decodedToken.data
       next();
     })
@@ -64,7 +65,7 @@ export function verifyJWT_isRightUser(req, res, next) {
   let token = req.headers.authorization;
   verifyJWTToken(token)
     .then(decodedToken => {
-      if(req.pseudo !== decodedToken.data.pseudo){
+      if(req.body.pseudo !== decodedToken.data.pseudo){
         res.status(401).json({ message: "You aren't allowed to access this page."})
       }
       else{
@@ -81,13 +82,13 @@ export function verifyJWT_isAdmin(req, res, next) {
   let token = req.headers.authorization;
   verifyJWTToken(token)
     .then(decodedToken => {
-      if(decodedToken.role != "admin"){
+      if(decodedToken.data.role != "admin"){
         res.status(401).json({ message: "You must be admin to access this page."})
       }
       req.user = decodedToken.data;
       next();
     })
     .catch(err => {
-      res.status(40).json({ message: "Invalid auth token provided." });
+      res.status(401).json({ message: "Invalid auth token provided." });
     });
 }

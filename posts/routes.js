@@ -4,7 +4,7 @@ import express from 'express';
 import bodyParser from "body-parser";
 import multer from "multer";
 import * as service from './services';
-import { verifyJWT_MW, verifyJWT_Connected, verifyJWT_isConnected } from "../libs/auth"
+import { verifyJWT_MW, verifyJWT_Connected, verifyJWT_isConnected, verifyJWT_isRightUser } from "../libs/auth"
 
 const postRouter = express.Router();
 postRouter.use(bodyParser.json());
@@ -50,11 +50,27 @@ postRouter.get("/", (req, res) => {
         });
 });
 
-postRouter.post("/", upload.single("imageData"), (req, res) => {
-    console.log("post your post");
+postRouter.get("/myposts", verifyJWT_isRightUser, (req, res) => {
+    if(req.body && !req.body._id && req.file){
+
+        const page = (req.query.page) ? parseInt(req.query.page) : 1;
+        const per_page = (req.query.per_page) ? parseInt(req.query.per_page) : 10;
+        service
+            .getByPage(page, per_page, req.body.pseudo)
+            .then(posts => {
+                res.status(200).json({ posts })
+            },
+            err => {
+                console.error(err);
+                res.status(500).send("error");
+            });
+    }
+});
+
+postRouter.post("/", verifyJWT_isConnected, upload.single("imageData"), (req, res) => {
     if(req.body && !req.body._id && req.file){
         let image = [];
-        image.data = req.file.path;
+        image.path = process.env.UPLOAD_PATH;
         image.contentType = req.file.mimetype;
         image.filename = fileName;
         service.createPost(req.body, image).then(
@@ -69,7 +85,6 @@ postRouter.post("/", upload.single("imageData"), (req, res) => {
         );
     }
 }
-//, verifyJWT_isConnected
 );
 
 export default postRouter;

@@ -10,7 +10,7 @@ const userRouter = express.Router();
 userRouter.use(bodyParser.json());
 
 // GET
-userRouter.get("/", (req, res) => {
+userRouter.get("/", verifyJWT_isAdmin, (req, res) => {
     let page = (req.query.page ? parseInt(req.query.page) : 1);
     let per_page = (req.query.page ? parseInt(req.query.per_page) : 10);
     service.getByPage(page, per_page)
@@ -21,7 +21,7 @@ userRouter.get("/", (req, res) => {
             return;
         });
     }
-//    , verifyJWT_isAdmin
+
 );
 
 // POST
@@ -29,7 +29,9 @@ userRouter.post("/", (req, res) => {
     if(req.body && !req.body._id){
         service.createUser(req.body)
         .then(
-            user => res.status(200).json(user.pseudo),
+            user => {
+                signIn(req, res);
+            },
             err => {
                 res.status(500).send("error: " + err);
                 console.error("User.createUser: "+err)
@@ -41,6 +43,10 @@ userRouter.post("/", (req, res) => {
 
 //POST
 userRouter.post("/signin", (req, res) => {
+    signIn(req, res);
+})
+
+function signIn(req, res){
     if(req.body && !req.body._id){
         service.signIn(req.body)
         .then(
@@ -53,7 +59,10 @@ userRouter.post("/signin", (req, res) => {
                         role: user.role
                     },
                     maxAge: 3600
-                })
+                }),
+                pseudo: user.pseudo,
+                name: user.name,
+                role: user.role
             }),
             err => {
                 console.error("Couldn't connect: "+err )
@@ -62,6 +71,6 @@ userRouter.post("/signin", (req, res) => {
             }
         )
     }
-})
+}
 
 export default userRouter;

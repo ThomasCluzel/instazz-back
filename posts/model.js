@@ -5,7 +5,7 @@ const Schema = mongoose.Schema;
 
 //TODO: Change mongoDB schema to JSON Object
 var ImageSchema = new Schema({
-  data: {
+  path: {
     type: String,
     required: true
   },
