@@ -9,7 +9,7 @@ import { verifyJWT_MW, createJWToken, verifyJWT_isAdmin } from '../libs/auth';
 const userRouter = express.Router();
 userRouter.use(bodyParser.json());
 
-// GET
+//Get all users
 userRouter.get("/", verifyJWT_isAdmin, (req, res) => {
     let page = (req.query.page ? parseInt(req.query.page) : 1);
     let per_page = (req.query.page ? parseInt(req.query.per_page) : 10);
@@ -17,14 +17,14 @@ userRouter.get("/", verifyJWT_isAdmin, (req, res) => {
         .then(users => res.status(200).json({ users }))
         .catch(function(err){
             console.error("User.getByPage: "+err)
-            res.status(500).send("error: " + err);
+            res.status(500).send("Error while fetching users.");
             return;
         });
     }
 
 );
 
-// POST
+//Post to create user
 userRouter.post("/", (req, res) => {
     if(req.body && !req.body._id){
         service.createUser(req.body)
@@ -33,15 +33,18 @@ userRouter.post("/", (req, res) => {
                 signIn(req, res);
             },
             err => {
-                res.status(500).send("error: " + err);
+                res.status(500).send("Username already taken");
                 console.error("User.createUser: "+err)
                 return;
             }
         )
     }
+    else{
+        res.status(500).send("You need to send arguments.");
+    }
 });
 
-//POST
+//Post to signing
 userRouter.post("/signin", (req, res) => {
     signIn(req, res);
 })
@@ -54,12 +57,14 @@ function signIn(req, res){
                 succes: true,
                 token: createJWToken({
                     sessionData:{ 
+                        _id: user._id,
                         pseudo: user.pseudo,
                         name: user.name,
                         role: user.role
                     },
                     maxAge: 3600
                 }),
+                _id: user._id,
                 pseudo: user.pseudo,
                 name: user.name,
                 role: user.role
@@ -70,6 +75,9 @@ function signIn(req, res){
                 return;
             }
         )
+    }
+    else {
+        res.status(500).send("You need to send arguments.");
     }
 }
 

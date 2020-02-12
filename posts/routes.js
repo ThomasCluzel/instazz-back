@@ -36,53 +36,61 @@ const upload = multer({
     fileFilter: fileFilter
 })
 
+//Get all posts
 postRouter.get("/", (req, res) => {
     const page = (req.query.page) ? parseInt(req.query.page) : 1;
     const per_page = (req.query.per_page) ? parseInt(req.query.per_page) : 10;
     service
-        .getByPage(page, per_page)
+        .getByPage(page, per_page, 'undefined')
         .then(posts => {
             res.status(200).json({ posts })
         },
         err => {
-            console.error(err);
-            res.status(500).send("error");
+            console.error("Error: " + err);
+            res.status(500).send("Error while fetching posts.");
         });
 });
 
-postRouter.get("/myposts", verifyJWT_isRightUser, (req, res) => {
-    if(req.body && !req.body._id && req.file){
-
+//Get my posts
+postRouter.get("/myposts", verifyJWT_isConnected, (req, res) => {
+    if(req.user){
         const page = (req.query.page) ? parseInt(req.query.page) : 1;
         const per_page = (req.query.per_page) ? parseInt(req.query.per_page) : 10;
         service
-            .getByPage(page, per_page, req.body.pseudo)
+            .getByPage(page, per_page, req.user)
             .then(posts => {
                 res.status(200).json({ posts })
             },
             err => {
-                console.error(err);
-                res.status(500).send("error");
+                console.error("Error: " +err);
+                res.status(500).send("Error while fetching your posts.");
             });
+    }
+    else{
+        res.status(500).send("You need to send arguments.");
     }
 });
 
+//Post a post
 postRouter.post("/", verifyJWT_isConnected, upload.single("imageData"), (req, res) => {
-    if(req.body && !req.body._id && req.file){
+    if(req.body && !req.body._id && req.file && req.user){
         let image = [];
         image.path = process.env.UPLOAD_PATH;
         image.contentType = req.file.mimetype;
         image.filename = fileName;
-        service.createPost(req.body, image).then(
+        service.createPost(req.user, req.body, image).then(
             post => {
                 res.status(200).json(post);
             },
             err => {
-                console.error(err);
-                res.status(500).send("error");
+                console.error("Error: " +err);
+                res.status(500).send("Failed to upload your post.");
                 return;
             }
         );
+    }
+    else{
+        res.status(500).send("You need to send arguments.");
     }
 }
 );

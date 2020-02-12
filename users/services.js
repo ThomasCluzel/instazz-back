@@ -32,6 +32,7 @@ export async function signIn(body){
         user.pseudo = result.pseudo;
         user.name = result.name;
         user.role = result.role;
+        user._id = result._id;
         console.log("User "+user.pseudo+" connected.")
         return user;
     }

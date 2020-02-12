@@ -52,7 +52,7 @@ export function verifyJWT_isConnected(req, res, next) {
   let token = req.headers.authorization;
   verifyJWTToken(token)
     .then(decodedToken => {
-      console.log(decodedToken);
+      //console.log(decodedToken);
       req.user = decodedToken.data
       next();
     })
@@ -65,7 +65,7 @@ export function verifyJWT_isRightUser(req, res, next) {
   let token = req.headers.authorization;
   verifyJWTToken(token)
     .then(decodedToken => {
-      if(req.body.pseudo !== decodedToken.data.pseudo){
+      if(req.body._id !== decodedToken.data._id){
         res.status(401).json({ message: "You aren't allowed to access this page."})
       }
       else{

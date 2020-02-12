@@ -34,6 +34,10 @@ var PostSchema = new Schema({
     type: Schema.Types.ObjectId, 
     ref: "Image",
     required: true
+  },
+  publication_date: {
+    type: Date,
+    default: Date.now()
   }
 });
 
