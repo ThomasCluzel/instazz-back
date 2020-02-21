@@ -5,7 +5,8 @@
   "main": "app.js",
   "scripts": {
     "test": "echo \"No test specified\" && exit 0",
-    "start": "node_modules/.bin/nodemon app.js --exec babel-node --"
+    "start": "node_modules/.bin/nodemon app.js --exec babel-node --",
+	"build": "mkdir src && cp -r app.js libs posts users src && ./node_modules/.bin/babel src -d build && rm -rf src"
   },
   "keywords": [
     "test",
@@ -20,7 +21,8 @@
     "jsonwebtoken": "^8.5.1",
     "lodash": "^4.17.15",
     "mongoose": "^5.8.1",
-    "multer": "^1.4.2"
+    "multer": "^1.4.2",
+    "@babel/runtime": "^7.8.4"
   },
   "devDependencies": {
     "@babel/cli": "^7.7.5",
@@ -29,7 +31,6 @@
     "@babel/node": "^7.7.4",
     "@babel/plugin-transform-runtime": "^7.7.6",
     "@babel/preset-env": "^7.7.6",
-    "@babel/runtime": "^7.7.6",
     "nodemon": "^2.0.2"
   },
   "babel": {
