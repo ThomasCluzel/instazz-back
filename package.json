@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"No test specified\" && exit 0",
     "start": "node_modules/.bin/nodemon app.js --exec babel-node --",
-	"build": "mkdir src && cp -r app.js libs posts users src && ./node_modules/.bin/babel src -d build && rm -rf src"
+	"heroku-postbuild": "mkdir src $PWD/uploads && cp -r app.js libs posts users src && ./node_modules/.bin/babel src -d build && rm -rf src"
   },
   "keywords": [
     "test",
