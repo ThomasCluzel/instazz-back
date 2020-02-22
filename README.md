@@ -1,5 +1,7 @@
 # instazz-back
 
+[![Build Status](https://travis-ci.org/ThomasCluzel/instazz-back.svg?branch=master)](https://travis-ci.org/ThomasCluzel/instazz-back)
+
 This project is the backend of the InstaZZ app of the course ZZ3-javascript-ecosystems
 
 Throughout this course, we will build a social-network with a
