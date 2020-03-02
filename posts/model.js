@@ -36,8 +36,7 @@ var PostSchema = new Schema({
     required: true
   },
   publication_date: {
-    type: Date,
-    default: Date.now()
+    type: Date
   }
 });
 

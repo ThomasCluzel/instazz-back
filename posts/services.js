@@ -9,6 +9,7 @@ export async function createPost(user, post, img) {
     console.log("[img] - Creation");
     const imgRef = Image.create({...img})
     post.image = (await imgRef)._id;
+    post.publication_date = Date.now();
     console.log("[post] - Creation");
     post.author = user._id;
     return Post.create({ ...post });
@@ -23,8 +24,8 @@ export async function getByPage(page, per_page, user) {
     const start = (page - 1) * per_page;
     //Lean permet d'obtenir un objet pur Javascript
     let result = await Post.find(condition)
-        .sort({"publication_date": -1})
-        .populate({path: "image", select: "path filename"})
+        .sort({"publication_date": "desc"})
+        .populate({path: "image", select: "filename"})
         .populate("author", "pseudo")
         .skip(start)
         .limit(per_page)
