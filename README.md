@@ -23,6 +23,9 @@ Required content of the ".env" file
 # Database connection string
 MONGO=mongodb://<user>:<passwd>@<host>
 
+#Database connection string for tests
+MONGO_TEST=mongodb://<user>:<passwd>@<host>
+
 # API port
 PORT=5000
 

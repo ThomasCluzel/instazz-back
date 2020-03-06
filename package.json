@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"No test specified\" && exit 0",
     "start": "node_modules/.bin/nodemon app.js --exec babel-node --",
-	"heroku-postbuild": "mkdir src $PWD/uploads && cp -r app.js libs posts users src && ./node_modules/.bin/babel src -d build && rm -rf src"
+    "heroku-postbuild": "mkdir src $PWD/uploads && cp -r app.js libs posts users src && ./node_modules/.bin/babel src -d build && rm -rf src"
   },
   "keywords": [
     "test",
@@ -15,14 +15,15 @@
   "author": "Thomas Cluzel et Bruno Jousse",
   "license": "ISC",
   "dependencies": {
+    "@babel/runtime": "^7.8.4",
     "cors": "^2.8.5",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "jsonwebtoken": "^8.5.1",
     "lodash": "^4.17.15",
+    "mocha": "^7.1.0",
     "mongoose": "^5.8.1",
-    "multer": "^1.4.2",
-    "@babel/runtime": "^7.8.4"
+    "multer": "^1.4.2"
   },
   "devDependencies": {
     "@babel/cli": "^7.7.5",

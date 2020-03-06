@@ -12,7 +12,7 @@ userRouter.use(bodyParser.json());
 //Get all users
 userRouter.get("/", verifyJWT_isAdmin, (req, res) => {
     let page = (req.query.page ? parseInt(req.query.page) : 1);
-    let per_page = (req.query.page ? parseInt(req.query.per_page) : 10);
+    let per_page = (req.query.per_page ? parseInt(req.query.per_page) : 10);
     service.getByPage(page, per_page)
         .then(users => res.status(200).json({ users }))
         .catch(function(err){

@@ -42,7 +42,7 @@ export async function signIn(body){
 }
 
 //Hash a string
-function hashString(password) {
+export function hashString(password) {
     let hash = 0, i, chr;
     if (password.length === 0) 
         return hash;
