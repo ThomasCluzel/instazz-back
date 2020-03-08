@@ -22,9 +22,24 @@ chai.use(chaiHttp);
 
 describe("hooks", function(){
 
+    before(function(done){
+        fs.readdir(process.env.UPLOAD_TEST_PATH, (err, files) => {
+            files.forEach(file =>{
+                fs.unlink(path.join(process.env.UPLOAD_TEST_PATH, file));
+            })
+        });
+        Image.remove({}, (err) => {
+            Post.remove({}, (err) => {
+                User.remove({}, (err) => {
+                    done();
+                })
+            })
+        })
+    })
+
     describe("/api/v1/users", function() {
 
-        beforeEach( function(done){
+        afterEach( function(done){
             User.remove({}, (err) => {
                 done();
             })
@@ -91,8 +106,7 @@ describe("hooks", function(){
                     .end( (err, res) => {
                         res.should.have.status(500);
                         
-                        let result = await User.find({});
-                        result.length.should.equal(1);
+                        should.not.exist(res.body.pseudo)
 
                         done()
                     })
@@ -135,8 +149,7 @@ describe("hooks", function(){
                     .end( (err, res) => {
                         res.should.have.status(500);
                         
-                        let result = await User.find({});
-                        should.not.exist(result);
+                        should.not.exist(res.body.pseudo);
 
                         done()
                     })
@@ -208,10 +221,10 @@ describe("hooks", function(){
     
     describe("/api/v1/posts", function() {
 
-        beforeEach( function(done){
-            fs.readdir(process.env.UPLOAD_PATH, (err, files) => {
+        afterEach( function(done){
+            fs.readdir(process.env.UPLOAD_TEST_PATH, (err, files) => {
                 files.forEach(file =>{
-                    fs.unlink(path.join(process.env.UPLOAD_PATH, file));
+                    fs.unlink(path.join(process.env.UPLOAD_TEST_PATH, file));
                 })
             });
             Image.remove({}, (err) => {
@@ -238,17 +251,20 @@ describe("hooks", function(){
         }
 
         const img1 = {
-            path: process.env.UPLOAD_PATH,
+            _id: 1,
+            path: process.env.UPLOAD_TEST_PATH,
             contentType: "image/jpeg",
             filename: "nodeJS.jpg"
         }
         const img2 = {
-            path: process.env.UPLOAD_PATH,
+            _id: 2,
+            path: process.env.UPLOAD_TEST_PATH,
             contentType: "image/png",
             filename: "react.png"
         }
 
-        // TODO: Create image base64
+        let imageBase64_1;
+        let imageBase64_2;
 
         let post1 = {
             description: "My first nodeJS post"
@@ -262,29 +278,59 @@ describe("hooks", function(){
             description: "My second react post"
         }
 
+        before(function(){
+            post1.author = user1._id;
+            post1.pseudo = user1.pseudo;
+            post2.author = user2._id;
+            post2.pseudo = user2.pseudo;
+            post3.author = user2._id;
+            post3.pseudo = user2.pseudo;
+
+            post1.image = img1;
+            post2.image = img2;
+            post3.image = img2;
+
+            let bitmap1 = fs.readFileSync("./resources/" + img1.filename);
+            imageBase64_1 = new Buffer.from(bitmap1).toString("base64");
+            let bitmap2 = fs.readFileSync("./resources/" + img2.filename);
+            imageBase64_2 = new Buffer.from(bitmap2).toString("base64");
+
+            post1.image64 = imageBase64_1;
+            post2.image64 = imageBase64_2;
+            post3.image64 = imageBase64_2;
+        })
+
         describe("Get /", function() {
 
             before(function(){
-                const user1 = User.create({...user1});
-                const user2 = User.create({...user2});
+                const user1 = await User.create({...user1});
+                const user2 = await User.create({...user2});
 
-                post1.author = user1._id;
-                post1.pseudo = user1.pseudo;
-                post2.author = user2._id;
-                post2.pseudo = user2.pseudo;
-                post3.author = user2._id;
-                post3.pseudo = user2.pseudo;
+                const image1 = await Image.create({...img1});
+                const image2 = await Image.create({...img2});
 
-                post1.image = img1;
-                post2.image = img2;
-                post3.image = img2;
+                const post1 = await Post.create({
+                    description: post1.description,
+                    author: user1._id,
+                    image: image1._id,
+                })
+                const post2 = await Post.create({
+                    description: post2.description,
+                    author: user2._id,
+                    image: image2._id,
+                })
+                const post3 = await Post.create({
+                    description: post3.description,
+                    author: user2._id,
+                    image: image2._id,
+                })
 
-                //TODO : add image64
+                await fs.copyFile("./resources/"+img1.filename, path.join(process.env.UPLOAD_TEST_PATH, img1.filename))
+                await fs.copyFile("./resources/"+img2.filename, path.join(process.env.UPLOAD_TEST_PATH, img2.filename))
+
             })
 
             it('it should get all posts', (done) => {
-                //TODO: Save posts and images
-
                 chai.request(server)
                     .get("/api/v1/posts/")
                     .end( (err, res) => {
@@ -328,10 +374,18 @@ describe("hooks", function(){
         })
 
         describe("Post /", function() {
+            let user1Token;
+
+            before(function(){
+                const user1 = User.create({...user1});
+                user1Token = createJWToken({...user1});
+            })
+
             it('it should upload the post', (done) => {
-                //TODO: upload image
                 chai.request(server)
                     .post("/api/v1/posts")
+                    .set("Content-Type", "multipart/form-data")
+                    .set("Authorization", user1Token)
                     .send({
                         "description": post1.description,
                         "imageData": path.join(path.resolve(__dirname), "resources/"+post1.image.filename)
@@ -353,9 +407,30 @@ describe("hooks", function(){
                         result[0].image.should.have.property("contentType").eql(post1.image.contentType)
                         result[0].image.should.have.property("path").eql(post1.image.path)
                         result[0].author.should.have.property("pseudo").eql(post1.pseudo)
-                        result[0].body.should.have.property("publication_date");
+                        result[0].should.have.property("publication_date");
+                        
+                        let bitmap = fs.readFileSync(path.join(result[0].path, result[0].filename));
+                        imageBase64 = new Buffer.from(bitmap1).toString("base64");
+                        imageBase64.should.eql(imageBase64_1);
 
-                        //TODO : verify image exists
+                        done();
+                    })
+            })
+
+            
+            it('it should deny access', (done) => {
+                chai.request(server)
+                    .post("/api/v1/posts")
+                    .set("Content-Type", "multipart/form-data")
+                    .set("Authorization", user1Token+"NotEqual")
+                    .send({
+                        "description": post1.description,
+                        "imageData": path.join(path.resolve(__dirname), "resources/"+post1.image.filename)
+                    })
+                    .end( (err, res) => {
+                        res.should.have.status(500);
+                        should.not.exist(res.body.posts)
+
                         done();
                     })
             })
@@ -367,24 +442,30 @@ describe("hooks", function(){
             let user1Token;
 
             before(function(){
-                const user1 = User.create({...user1});
-                const user2 = User.create({...user2});
+                const user1 = await User.create({...user1});
+                const user2 = await User.create({...user2});
 
-                post1.author = user1._id;
-                post1.pseudo = user1.pseudo;
-                post2.author = user2._id;
-                post2.pseudo = user2.pseudo;
+                const image1 = await Image.create({...img1});
+                const image2 = await Image.create({...img2});
 
-                post1.image = img1;
-                post2.image = img2;
+                const post1 = await Post.create({
+                    description: post1.description,
+                    author: user1._id,
+                    image: image1._id,
+                })
+                const post2 = await Post.create({
+                    description: post2.description,
+                    author: user2._id,
+                    image: image2._id,
+                })
 
-                user1Token = createJWToken({...user1});
+                await fs.copyFile("./resources/"+img1.filename, path.join(process.env.UPLOAD_TEST_PATH, img1.filename))
+                await fs.copyFile("./resources/"+img2.filename, path.join(process.env.UPLOAD_TEST_PATH, img2.filename))
 
-                //TODO : add image64
+                user1Token = createJWTToken({...user1})
             })
 
             it('it should get my posts', (done) => {
-                //TODO: Save posts and images
 
                 chai.request(server)
                     .get("/api/v1/posts/myposts")
@@ -406,7 +487,6 @@ describe("hooks", function(){
             })
 
             it('it should be denied access', (done) => {
-                //TODO: Save posts and images
 
                 chai.request(server)
                     .get("/api/v1/posts/myposts")

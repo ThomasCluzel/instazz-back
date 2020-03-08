@@ -34,6 +34,9 @@ JWT_SECRET=xxx
 
 # Path where images should be uploaded (must exists)
 UPLOAD_PATH=/path
+
+# Path where images used during test should be uploaded (must exists). They are deleted at the end of each test.
+UPLOAD_TEST_PATH=/path
 ```
 
 ## Some useful commands
