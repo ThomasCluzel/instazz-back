@@ -14,12 +14,16 @@ userRouter.get("/", verifyJWT_isAdmin, (req, res) => {
     let page = (req.query.page ? parseInt(req.query.page) : 1);
     let per_page = (req.query.per_page ? parseInt(req.query.per_page) : 10);
     service.getByPage(page, per_page)
-        .then(users => res.status(200).json({ users }))
-        .catch(function(err){
-            console.error("User.getByPage: "+err)
-            res.status(500).send("Error while fetching users.");
-            return;
-        });
+        .then(
+            users => {
+                res.status(200).json({ users })
+            },
+            err => {
+                console.error("User.getByPage: "+err)
+                res.status(500).send("Error while fetching users.");
+                return;
+            }
+        );
     }
 
 );
@@ -71,7 +75,7 @@ function signIn(req, res){
             }),
             err => {
                 console.error("Couldn't connect: "+err )
-                res.status(401).send("Login or password invalid")
+                res.status(500).send("Login or password invalid")
                 return;
             }
         )

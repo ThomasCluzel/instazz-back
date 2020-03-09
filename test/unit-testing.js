@@ -1,49 +1,51 @@
 import chai from "chai";
 let should = chai.should();
-import chaitHttp from "chai-http";
+import chaiHttp from "chai-http";
 import {describe, it} from "mocha";
+import chaiDateTime from "chai-datetime"
 
 import dotenv from "dotenv";
-import mongoose from "mongoose";
 import fs from "fs";
 import path from "path";
 
-import postRouter from '../posts/routes';
-import userRouter from '../users/routes';
-import hashString from '../users/services';
+import { hashString } from '../users/services';
 import User from '../users/model';
 import {Post, Image} from '../posts/model';
 import server from "../app";
-import createJWTToken, { createJWToken } from "../libs/auth"
+import {createJWToken} from "../libs/auth"
+
+dotenv.config()
 
 process.env.MONGO = process.env.MONGO_TEST;
 
 chai.use(chaiHttp);
+chai.use(chaiDateTime)
+
+const url = "http://localhost:" + process.env.PORT  
+
+var requester = chai.request(url).keepOpen()
 
 describe("hooks", function(){
 
-    before(function(done){
-        fs.readdir(process.env.UPLOAD_TEST_PATH, (err, files) => {
-            files.forEach(file =>{
-                fs.unlink(path.join(process.env.UPLOAD_TEST_PATH, file));
-            })
-        });
-        Image.remove({}, (err) => {
-            Post.remove({}, (err) => {
-                User.remove({}, (err) => {
-                    done();
-                })
-            })
+    before(function(){
+        return dropDatabasePromise()
+    })
+
+    after(function(){
+        return new Promise((resolve, reject) => {
+            console.log("End of tests")
+            try{
+                requester.close()
+                resolve()
+            }
+            catch(err){
+                console.error(err)
+                reject(err)
+            }
         })
     })
 
     describe("/api/v1/users", function() {
-
-        afterEach( function(done){
-            User.remove({}, (err) => {
-                done();
-            })
-        })
 
         const hashedPassword1 = hashString("myPassword")
         const user1 = {
@@ -76,143 +78,266 @@ describe("hooks", function(){
         }
 
         describe("Post /", function() {
-            it('it should post user with default role', (done) => {
-                chai.request(server)
+            before(function(){
+                return new Promise( (resolve, reject) => {
+                    User.create({
+                        name: user2.name,
+                        pseudo: user2.pseudo,
+                        password: hashedPassword1})
+                    .then((res) => {
+                        console.log("Database set")
+                        resolve()
+                    })
+                    .catch((err) => {
+                        console.error(err)
+                        reject(err)
+                    })
+                })
+            })
+
+            after( function(){
+                return new Promise((resolve, reject) => {
+                    User.deleteMany({}, (err) => {
+                        if(err){
+                            console.error(err);
+                            reject(err)
+                            return;
+                        }
+                        console.log("Database cleaned")
+        
+                        resolve();
+                    })
+                })
+            })
+
+            it('it should post user with default role', function() {
+                return requester
                     .post("/api/v1/users")
-                    .send(user4)
-                    .end( (err, res) => {
+                    .set("Content-Type", "application/json")
+                    .send({...user4})
+                    .then((res) => {
                         res.should.have.status(200);
                         res.body.should.be.a('object');
-                        res.body.should.have.property("success").eql(true)
                         res.body.should.have.property("token")
                         res.body.should.have.property("pseudo").eql(user4.pseudo)
                         res.body.should.have.property("name").eql(user4.name)
                         res.body.should.have.property("role").eql("user")
                         
-                        let result = await User.find({});
-                        result.length.should.equal(1);
-                        result[0].should.be.a("object");
-                        result[0].should.have.property("pseudo").eql(user4.pseudo)
-                        result[0].should.have.property("name").eql(user4.name)
-                        result[0].should.have.property("role").eql("user")
-                        done();
+                        return User.findOne({pseudo: user4.pseudo})
+                        .then((result) => {
+                                result.should.be.a("object");
+                                result.should.have.property("pseudo").eql(user4.pseudo)
+                                result.should.have.property("name").eql(user4.name)
+                                result.should.have.property("role").eql("user")
+                                result.should.have.property("password").eql(""+hashedPassword2)
+                        })
+                        .catch((err) => {
+                            throw err;
+                        });
                     })
+                    .catch((err) => {
+                        throw err;
+                    })
+                
             })
 
-            it('it should not post user with same username', (done) => {
-                chai.request(server)
+            it('it should not post user with same username', () => {
+                return requester
                     .post("/api/v1/users")
-                    .send({user4})
-                    .end( (err, res) => {
-                        res.should.have.status(500);
-                        
-                        should.not.exist(res.body.pseudo)
-
-                        done()
+                    .set("Content-Type", "application/json")
+                    .send({...user2})
+                    .then((res) => {
+                            res.should.have.status(500);
+                            
+                            should.not.exist(res.body.pseudo)
+                    })
+                    .catch((err) => {
+                        throw err;
                     })
             })
         })
-
         
         describe("Post /signin", function() {
             before(function(){
-                User.create({...user4});
+                return new Promise( (resolve, rejectUser) => {
+                    User.create({
+                        name: user4.name,
+                        pseudo: user4.pseudo,
+                        role: "admin",
+                        password: hashedPassword2
+                    })
+                    .then((res) => {
+                        console.log("Database set")
+                        resolve()
+                    })
+                    .catch((err) => {
+                        console.error(err)
+                        reject(err)
+                    })
+                })
+           })
+
+            after( function(){
+                return new Promise((resolve, reject) => {
+                    User.deleteMany({}, (err) => {
+                        if(err){
+                            console.error(err);
+                            reject(err)
+                            return;
+                        }
+                        console.log("Database cleaned")
+        
+                        resolve();
+                    })
+                })
             })
 
-            it('it should connect the user', (done) => {
-                chai.request(server)
+            it('it should connect the user', () => {
+                return requester
                     .post("/api/v1/users/signin")
+                    .set("Content-Type", "application/json")
                     .send({
                         pseudo: user4.pseudo,
-                        password: user4.password,
+                        password: user4.password
                     })
-                    .end( (err, res) => {
+                    .then((res) => {
                         res.should.have.status(200);
                         res.body.should.be.a('object');
-                        res.body.should.have.property("success").eql(true)
                         res.body.should.have.property("token")
                         res.body.should.have.property("pseudo").eql(user4.pseudo)
                         res.body.should.have.property("name").eql(user4.name)
                         res.body.should.have.property("role").eql(user4.role)
-
-                        done();
+                    })
+                    .catch((err) => {
+                        throw err;
                     })
             })
 
-            it('it should not connect the user', (done) => {
-                chai.request(server)
+            it('it should not connect the user', () => {
+                return requester
                     .post("/api/v1/users/signin")
+                    .set("Content-Type", "application/json")
                     .send({
                         pseudo: user4.pseudo,
                         password: user4.password + "NotEqual",
                     })
-                    .end( (err, res) => {
-                        res.should.have.status(500);
-                        
-                        should.not.exist(res.body.pseudo);
-
-                        done()
+                    .then( (res) => {
+                            res.should.have.status(500);
+                            
+                            should.not.exist(res.body.pseudo);
+                    })
+                    .catch((err) => {
+                        throw err;
                     })
             })
         })
 
         describe("Get /", function() {
             let adminToken;
+            let userToken
 
             before(function(){
-                User.create({...user1});
-                User.create({...user2});
-                User.create({...user3});
-                User.create({...user4});
+                return new Promise(async function(resolve, reject) {
+                    try{
+                        const u1 = await User.create({...user1});
+                        await User.create({...user2});
+                        await User.create({...user3});
+                        const u4 = await User.create({...user4});
+                        
+                        adminToken = createJWToken({
+                            sessionData:{ 
+                                _id: u4._id,
+                                pseudo: user4.pseudo,
+                                name: user4.name,
+                                role: user4.role
+                            },
+                            maxAge: 3600
+                        });
+                        userToken = createJWToken({
+                            sessionData:{ 
+                                _id: u1._id,
+                                pseudo: user1.pseudo,
+                                name: user1.name,
+                                role: user1.role
+                            },
+                            maxAge: 3600
+                        });
+                        console.log("Database set")
 
-                adminToken = createJWToken({...user4});
+                        resolve()
+                    }
+                    catch(err){
+                        console.error(err)
+                        reject(err)
+                    }
+                })
             })
 
-            it('it should get all users', (done) => {
-                chai.request(server)
+            after( function(){
+                return new Promise((resolve, reject) => {
+                    User.deleteMany({}, (err) => {
+                        if(err){
+                            console.error(err);
+                            reject(err)
+                            return;
+                        }
+                        console.log("Database cleaned")
+        
+                        resolve();
+                    })
+                })
+            })
+
+            it('it should get all users', () => {
+                return requester
                     .get("/api/v1/users/")
                     .set("Authorization", adminToken)
-                    .end( (err, res) => {
+                    .then( (res) => {      
                         res.should.have.status(200);
                         res.body.should.be.a('object');
                         const users = res.body.users;
                         res.body.users.should.be.a('array')
                         users.length.should.equal(4);
-                        users[0].should.have.property("pseudo").eql(user1.pseudo)
-                        users[0].should.have.property("name").eql(user1.name)
-                        users[0].should.have.property("role").eql(user1.role)
-                        users[0].should.have.property("password").eql(hashedPassword1)
-                        done();
+                        users[0].should.have.property("role")
+                        users[0].should.have.property("name")
+                        users[0].should.have.property("pseudo")
+                    })
+                    .catch((err) => {
+                        throw err;
                     })
             })
 
-            it('it should get 2 users', (done) => {
-                chai.request(server)
-                    .get("/api/v1/users/?page=1,per_page=2")
+            it('it should get 2 users', () => {
+                return requester
+                    .get("/api/v1/users")
                     .set("Authorization", adminToken)
-                    .end( (err, res) => {
-                        res.should.have.status(200);
-                        res.body.should.be.a('object');
-                        const users = res.body.users;
-                        res.body.users.should.be.a('array')
-                        users.length.should.equal(2);
-                        users[0].should.have.property("pseudo").eql(user1.pseudo)
-                        users[0].should.have.property("name").eql(user1.name)
-                        users[0].should.have.property("role").eql(user1.role)
-                        users[0].should.have.property("password").eql(hashedPassword1)
-                        done();
+                    .query({page: 2, per_page:2})
+                    .then( (res) => {
+                            res.should.have.status(200);
+                            res.body.should.be.a('object');
+                            const users = res.body.users;
+                            res.body.users.should.be.a('array')
+                            users.length.should.equal(2);
+                            users[0].should.have.property("role")
+                            users[0].should.have.property("name")
+                            users[0].should.have.property("pseudo")
+                    })
+                    .catch((err) => {
+                        throw err;
                     })
             })
 
-            it('it should deny access', (done) => {
-                chai.request(server)
+            it('it should deny access', () => {
+                return requester
                     .get("/api/v1/users/")
-                    .set("Authorization", adminToken+"NotEqual")
-                    .end( (err, res) => {
+                    .set("Authorization", userToken)
+                    .then((res) => {
                         res.should.have.status(500);
                         
                         should.not.exist(res.body.users);
-                        done();
+                    })
+                    .catch((err) => {
+                        throw err;
                     })
             })
         })
@@ -221,43 +346,26 @@ describe("hooks", function(){
     
     describe("/api/v1/posts", function() {
 
-        afterEach( function(done){
-            fs.readdir(process.env.UPLOAD_TEST_PATH, (err, files) => {
-                files.forEach(file =>{
-                    fs.unlink(path.join(process.env.UPLOAD_TEST_PATH, file));
-                })
-            });
-            Image.remove({}, (err) => {
-                Post.remove({}, (err) => {
-                    User.remove({}, (err) => {
-                        done();
-                    })
-                })
-            })
-        })
-
         const user1 = {
             name: "nodeJS",
             pseudo: "nodeJS",
-            password: "myPassword",
+            password: hashString("myPassword"),
             role: "user"
         }
 
         const user2 = {
             name: "react",
             pseudo: "react",
-            password: "myPassword",
+            password: hashString("myPassword"),
             role: "user"
         }
 
         const img1 = {
-            _id: 1,
             path: process.env.UPLOAD_TEST_PATH,
             contentType: "image/jpeg",
             filename: "nodeJS.jpg"
         }
         const img2 = {
-            _id: 2,
             path: process.env.UPLOAD_TEST_PATH,
             contentType: "image/png",
             filename: "react.png"
@@ -267,32 +375,32 @@ describe("hooks", function(){
         let imageBase64_2;
 
         let post1 = {
-            description: "My first nodeJS post"
+            description: "My first nodeJS post",
+            publication_date : Date.now()
         }
 
         let post2 = {
-            description: "My first react post"
+            description: "My first react post",
+            publication_date : Date.now()
         }
 
         let post3 = {
-            description: "My second react post"
+            description: "My second react post",
+            publication_date : Date.now()
         }
 
         before(function(){
-            post1.author = user1._id;
             post1.pseudo = user1.pseudo;
-            post2.author = user2._id;
             post2.pseudo = user2.pseudo;
-            post3.author = user2._id;
             post3.pseudo = user2.pseudo;
 
             post1.image = img1;
             post2.image = img2;
             post3.image = img2;
 
-            let bitmap1 = fs.readFileSync("./resources/" + img1.filename);
+            let bitmap1 = fs.readFileSync(path.join(path.resolve(__dirname), "resources/" + img1.filename));
             imageBase64_1 = new Buffer.from(bitmap1).toString("base64");
-            let bitmap2 = fs.readFileSync("./resources/" + img2.filename);
+            let bitmap2 = fs.readFileSync(path.join(path.resolve(__dirname), "resources/" + img2.filename));
             imageBase64_2 = new Buffer.from(bitmap2).toString("base64");
 
             post1.image64 = imageBase64_1;
@@ -303,37 +411,60 @@ describe("hooks", function(){
         describe("Get /", function() {
 
             before(function(){
-                const user1 = await User.create({...user1});
-                const user2 = await User.create({...user2});
+                return new Promise(async(resolve, reject) => {
+                    try{
+                        const u1 = await User.create({...user1});
+                        const u2 = await User.create({...user2});
 
-                const image1 = await Image.create({...img1});
-                const image2 = await Image.create({...img2});
+                        const image1 = await Image.create({...img1});
+                        const image2 = await Image.create({...img2});
 
-                const post1 = await Post.create({
-                    description: post1.description,
-                    author: user1._id,
-                    image: image1._id,
+                        await Post.create({
+                            description: post1.description,
+                            publication_date: post1.publication_date,
+                            author: u1._id,
+                            image: image1._id
+                        })
+                        await Post.create({
+                            description: post2.description,
+                            publication_date: post2.publication_date,
+                            author: u2._id,
+                            image: image2._id
+                        })
+                        await Post.create({
+                            description: post3.description,
+                            publication_date: post3.publication_date,
+                            author: u2._id,
+                            image: image2._id
+                        })
+
+                        return fs.copyFile(path.join(path.resolve(__dirname), "resources/"+img1.filename), path.join(process.env.UPLOAD_TEST_PATH, img1.filename), (err) => {
+                            if(err)
+                                throw err
+                            fs.copyFile(path.join(path.resolve(__dirname), "resources/"+img2.filename), path.join(process.env.UPLOAD_TEST_PATH, img2.filename), (err) =>{
+                                if(err)
+                                    throw err
+                                console.log("Database set")
+
+                                resolve()
+                            })
+                        })
+                    }
+                    catch(err){
+                        console.error(err)
+                        reject(err)
+                    }
                 })
-                const post2 = await Post.create({
-                    description: post2.description,
-                    author: user2._id,
-                    image: image2._id,
-                })
-                const post3 = await Post.create({
-                    description: post3.description,
-                    author: user2._id,
-                    image: image2._id,
-                })
-
-                await fs.copyFile("./resources/"+img1.filename, path.join(process.env.UPLOAD_TEST_PATH, img1.filename))
-                await fs.copyFile("./resources/"+img2.filename, path.join(process.env.UPLOAD_TEST_PATH, img2.filename))
-
             })
 
-            it('it should get all posts', (done) => {
-                chai.request(server)
+            after(function(){
+                return dropDatabasePromise();
+            })
+
+            it('it should get all posts', () => {
+                return requester
                     .get("/api/v1/posts/")
-                    .end( (err, res) => {
+                    .then((res) => {
                         res.should.have.status(200);
                         res.body.should.be.a('object');
                         const posts = res.body.posts;
@@ -342,32 +473,37 @@ describe("hooks", function(){
 
                         posts[0].should.have.property("publication_date");
                         posts[1].should.have.property("publication_date");
-                        posts[0].publication_date.should.be.gt(posts[1].publication_date);
+                        //TODO
+                        //should(String(posts[0].publication_date).localCompare(String(posts[1].publication_date))).be.eql(1);
 
-                        posts[0].should.have.property("description").eql(post3.description)
-                        posts[0].image.should.have.property("filename").eql(post3.image.filename)
-                        posts[0].author.should.have.property("pseudo").eql(post3.pseudo)
-                        posts[0].should.have.property("imageData").eql(post3.image64)
-                        done();
+                        posts[0].should.have.property("description")
+                        posts[0].image.should.have.property("filename")
+                        posts[0].author.should.have.property("pseudo")
+                        posts[0].should.have.property("imageData")
+                    })
+                    .catch((err) => {
+                        throw err
                     })
             })
 
-            it('it should get 1 post', (done) => {
-                chai.request(server)
-                    .get("/api/v1/posts/?page=2,per_page=2")
-                    .end( (err, res) => {
+            it('it should get 1 post', () => {
+                return requester
+                    .get("/api/v1/posts/")
+                    .query({page: 2, per_page: 2})
+                    .then( (res) => {
                         res.should.have.status(200);
                         res.body.should.be.a('object');
                         const posts = res.body.posts;
                         res.body.posts.should.be.a('array')
                         posts.length.should.equal(1);
                         posts[0].should.have.property("publication_date");
-                        posts[0].should.have.property("description").eql(post1.description)
-                        posts[0].image.should.have.property("filename").eql(post1.image.filename)
-                        posts[0].author.should.have.property("pseudo").eql(post1.pseudo)
-                        posts[0].should.have.property("imageData").eql(post1.image64)
-
-                        done();
+                        posts[0].should.have.property("description")
+                        posts[0].image.should.have.property("filename")
+                        posts[0].author.should.have.property("pseudo")
+                        posts[0].should.have.property("imageData")
+                    })
+                    .catch((err) => {
+                        throw err
                     })
             })
 
@@ -377,61 +513,92 @@ describe("hooks", function(){
             let user1Token;
 
             before(function(){
-                const user1 = User.create({...user1});
-                user1Token = createJWToken({...user1});
+
+                return new Promise(async(resolve, reject) => {
+                    try{
+                        const u1 = await User.create({...user1});
+                        
+                        user1Token = createJWToken({
+                            sessionData:{ 
+                                _id: u1._id,
+                                pseudo: user1.pseudo,
+                                name: user1.name,
+                                role: user1.role
+                            },
+                            maxAge: 3600
+                        });
+                        console.log("Database set")
+
+                        resolve()
+                    }
+                    catch(err){
+                        console.error(err)
+                        reject(err)
+                    }
+                })
             })
 
-            it('it should upload the post', (done) => {
-                chai.request(server)
+            after(function(){
+                return dropDatabasePromise();
+            })
+
+            it('it should upload the post', () => {
+                return requester
                     .post("/api/v1/posts")
                     .set("Content-Type", "multipart/form-data")
                     .set("Authorization", user1Token)
+                    .attach("imageData", fs.readFileSync(path.join(path.resolve(__dirname), "resources/"+post1.image.filename)), post1.image.filename)
                     .send({
-                        "description": post1.description,
-                        "imageData": path.join(path.resolve(__dirname), "resources/"+post1.image.filename)
+                        description: post1.description,
                     })
-                    .end( (err, res) => {
+                    .then((res) => {
                         res.should.have.status(200);
                         res.body.should.be.a('object');
                         res.body.should.have.property("description").eql(post1.description)
                         res.body.should.have.property("image")
                         res.body.should.have.property("author").eql(post1.author)
-                        res.body.should.have.property("publication_date");
+                        res.body.should.have.property("publication_date").eql(post1.publication_date);
 
-                        let result = await Post.find({}).populate("author").populate("image");
-                        result.length.should.equal(1);
-                        result[0].should.be.a("object");
-                        result[0].should.have.property("description").eql(post1.description)
-                        result[0].should.have.property("image")
-                        result[0].image.should.have.property("filename").eql(post1.image.filename)
-                        result[0].image.should.have.property("contentType").eql(post1.image.contentType)
-                        result[0].image.should.have.property("path").eql(post1.image.path)
-                        result[0].author.should.have.property("pseudo").eql(post1.pseudo)
-                        result[0].should.have.property("publication_date");
-                        
-                        let bitmap = fs.readFileSync(path.join(result[0].path, result[0].filename));
-                        imageBase64 = new Buffer.from(bitmap1).toString("base64");
-                        imageBase64.should.eql(imageBase64_1);
-
-                        done();
+                        return Post.findOne({description: post1.description}).populate("author").populate("image")
+                        .then((res) => {
+                            result.should.be.a("object");
+                            result.should.have.property("description").eql(post1.description)
+                            result.should.have.property("image")
+                            result.image.should.have.property("filename").eql(post1.image.filename)
+                            result.image.should.have.property("contentType").eql(post1.image.contentType)
+                            result.image.should.have.property("path").eql(post1.image.path)
+                            result.author.should.have.property("pseudo").eql(post1.pseudo)
+                            result.should.have.property("publication_date").eql(post1.publication_date);
+                            
+                            let bitmap = fs.readFileSync(path.join(result.image.path, result.image.filename));
+                            imageBase64 = new Buffer.from(bitmap1).toString("base64");
+                            imageBase64.should.eql(imageBase64_1);
+                        })
+                        .catch((err) =>{
+                            throw err
+                        });
+                    })
+                    .catch((err)=>{
+                        throw err
                     })
             })
 
             
-            it('it should deny access', (done) => {
-                chai.request(server)
+            it('it should deny access', () => {
+                return requester
                     .post("/api/v1/posts")
                     .set("Content-Type", "multipart/form-data")
                     .set("Authorization", user1Token+"NotEqual")
+                    .attach("imageData", fs.readFileSync(path.join(path.resolve(__dirname), "resources/"+post1.image.filename)), post1.image.filename)
                     .send({
-                        "description": post1.description,
-                        "imageData": path.join(path.resolve(__dirname), "resources/"+post1.image.filename)
+                        description: post1.description,
                     })
-                    .end( (err, res) => {
+                    .then( (res) => {
                         res.should.have.status(500);
                         should.not.exist(res.body.posts)
-
-                        done();
+                    })
+                    .catch((err)=>{
+                        throw err
                     })
             })
 
@@ -442,35 +609,65 @@ describe("hooks", function(){
             let user1Token;
 
             before(function(){
-                const user1 = await User.create({...user1});
-                const user2 = await User.create({...user2});
+                return new Promise(async (resolve, reject) => {
+                        try{
+                        const u1 = await User.create({...user1});
+                        const u2 = await User.create({...user2});
 
-                const image1 = await Image.create({...img1});
-                const image2 = await Image.create({...img2});
+                        const image1 = await Image.create({...img1});
+                        const image2 = await Image.create({...img2});
 
-                const post1 = await Post.create({
-                    description: post1.description,
-                    author: user1._id,
-                    image: image1._id,
+                        const p1 = await Post.create({
+                            description: post1.description,
+                            publication_date: post1.publication_date,
+                            author: u1._id,
+                            image: image1._id,
+                        })
+                        const p2 = await Post.create({
+                            description: post2.description,
+                            publication_date: post2.publication_date,
+                            author: u2._id,
+                            image: image2._id,
+                        })
+
+                        fs.copyFile(path.join(path.resolve(__dirname), "resources/"+img1.filename), path.join(process.env.UPLOAD_TEST_PATH, img1.filename), (err) => {
+                            if(err)
+                                throw err
+                            fs.copyFile(path.join(path.resolve(__dirname), "resources/"+img2.filename), path.join(process.env.UPLOAD_TEST_PATH, img2.filename), (err) =>{
+                                if(err)
+                                    throw err
+                                user1Token = createJWToken({
+                                    sessionData:{ 
+                                        _id: u1._id,
+                                        pseudo: u1.pseudo,
+                                        name: u1.name,
+                                        role: u1.role
+                                    },
+                                    maxAge: 3600
+                                });
+                                console.log("Database set")
+
+                                resolve()
+                            })
+                        })
+                    }
+                    catch(err){
+                        console.error(err)
+                        reject(err)
+                    }
                 })
-                const post2 = await Post.create({
-                    description: post2.description,
-                    author: user2._id,
-                    image: image2._id,
-                })
-
-                await fs.copyFile("./resources/"+img1.filename, path.join(process.env.UPLOAD_TEST_PATH, img1.filename))
-                await fs.copyFile("./resources/"+img2.filename, path.join(process.env.UPLOAD_TEST_PATH, img2.filename))
-
-                user1Token = createJWTToken({...user1})
             })
 
-            it('it should get my posts', (done) => {
+            after(function(){
+                return dropDatabasePromise()
+            })
 
-                chai.request(server)
+            it('it should get my posts', () => {
+
+               return  requester
                     .get("/api/v1/posts/myposts")
-                    .set("Authorizarion", user1Token)
-                    .end( (err, res) => {
+                    .set("Authorization", user1Token)
+                    .then( (res) => {
                         res.should.have.status(200);
                         res.body.should.be.a('object');
                         const posts = res.body.posts;
@@ -482,25 +679,74 @@ describe("hooks", function(){
                         posts[0].image.should.have.property("filename").eql(post1.image.filename)
                         posts[0].author.should.have.property("pseudo").eql(post1.pseudo)
                         posts[0].should.have.property("imageData").eql(post1.image64)
-                        done();
+                    })
+                    .catch((err) => {
+                        throw err
                     })
             })
 
-            it('it should be denied access', (done) => {
+            it('it should be denied access', () => {
 
-                chai.request(server)
+                return requester
                     .get("/api/v1/posts/myposts")
                     .set("Authorizarion", user1Token+"NotEqual")
-                    .end( (err, res) => {
+                    .then( (res) => {
                         res.should.have.status(500);
                         
                         should.not.exist(res.body.posts);
-
-                        done();
+                    })
+                    .catch((err) => {
+                        throw err
                     })
             })
-
         })
-
+        
     })
 });
+
+
+function dropDatabasePromise(){
+    return new Promise((resolve, reject) => {
+        fs.readdir(process.env.UPLOAD_TEST_PATH, (err, files) => {
+            if(err){
+                console.error(err);
+                reject(err)
+                return;
+            }
+            files.map((file) => {
+                fs.unlinkSync(path.join(process.env.UPLOAD_TEST_PATH, file));
+            })
+
+            return Promise.all(files).then((res) => {
+                Image.deleteMany({}, (err) => {
+                    if(err){
+                        console.error(err);
+                        reject(err)
+                        return;
+                    }
+                    Post.deleteMany({}, (err) => {
+                        if(err){
+                            console.error(err);
+                            reject(err)
+                            return;
+                        }
+                        User.deleteMany({}, (err) => {
+                            if(err){
+                                console.error(err);
+                                reject(err)
+                                return;
+                            }
+                            console.log("Database cleaned")
+                            resolve();
+                        })
+                    })
+                })
+            })
+            .catch(err => {
+                console.error(err);
+                reject(err)
+                return;
+            });
+        })
+    })
+}

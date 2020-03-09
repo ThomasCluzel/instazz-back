@@ -25,7 +25,7 @@ export async function getByPage(page, per_page, user) {
     //Lean permet d'obtenir un objet pur Javascript
     let result = await Post.find(condition)
         .sort({"publication_date": "desc"})
-        .populate({path: "image", select: "filename"})
+        .populate({path: "image", select: "path filename"})
         .populate("author", "pseudo")
         .skip(start)
         .limit(per_page)
@@ -34,6 +34,7 @@ export async function getByPage(page, per_page, user) {
         const pathImage = path.join(post.image.path, post.image.filename)
         let bitmap = fs.readFileSync(pathImage);
         post.imageData = new Buffer.from(bitmap).toString("base64");
+        post.path = null
         return post;
     });
     return result;

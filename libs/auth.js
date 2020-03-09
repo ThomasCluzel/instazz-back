@@ -57,7 +57,7 @@ export function verifyJWT_isConnected(req, res, next) {
       next();
     })
     .catch(err => {
-      res.status(401).json({ message: "You must be connected to access this page." });
+      res.status(500).json({ message: "You must be connected to access this page." });
     });
 }
 
@@ -66,7 +66,7 @@ export function verifyJWT_isRightUser(req, res, next) {
   verifyJWTToken(token)
     .then(decodedToken => {
       if(req.body._id !== decodedToken.data._id){
-        res.status(401).json({ message: "You aren't allowed to access this page."})
+        res.status(500).json({ message: "You aren't allowed to access this page."})
       }
       else{
         req.user = decodedToken.data
@@ -74,7 +74,7 @@ export function verifyJWT_isRightUser(req, res, next) {
       }
     })
     .catch(err => {
-      res.status(401).json({ message: "Invalid auth token provided." });
+      res.status(500).json({ message: "Invalid auth token provided." });
     });
 }
 
@@ -83,12 +83,14 @@ export function verifyJWT_isAdmin(req, res, next) {
   verifyJWTToken(token)
     .then(decodedToken => {
       if(decodedToken.data.role != "admin"){
-        res.status(401).json({ message: "You must be admin to access this page."})
+        res.status(500).json({ message: "You must be admin to access this page."})
       }
-      req.user = decodedToken.data;
-      next();
+      else{
+        req.user = decodedToken.data;
+        next();
+      }
     })
     .catch(err => {
-      res.status(401).json({ message: "Invalid auth token provided." });
+      res.status(500).json({ message: "Invalid auth token provided." });
     });
 }

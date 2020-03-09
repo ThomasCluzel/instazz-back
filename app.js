@@ -35,8 +35,10 @@ let db = mongoose.connection;
 db.on("error", console.error.bind(console, "error:"));
 db.once("open", function() {
     // launch server
-    app.listen(process.env.PORT, () => {
+    let server = app.listen(process.env.PORT, () => {
         console.log(`server running on port ${process.env.PORT}`);
-        module.exports = app; // for testing
     });
+
+    module.exports = server; // for testing
+
 });

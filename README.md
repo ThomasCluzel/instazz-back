@@ -68,7 +68,6 @@ If the username is already taken, you get an error: "Username is already taken"
 Otherwise, you are signed in and connected. The returned value is:
 ```json
 {
-    "succes": true,
     "token": "xxx",
     "_id": "xxx",
     "pseudo": "myPseudo",
@@ -90,7 +89,6 @@ Post request on localhost:5000/api/v1/users/signin with Content-Type=application
 The returned value is:
 ```json
 {
-    "succes": true,
     "token": "xxx",
     "pseudo": "myPseudo",
     "name": "myName",
