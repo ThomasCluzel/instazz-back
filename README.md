@@ -55,6 +55,11 @@ Launch server
 npm run start
 ```
 
+Launch tests
+```sh
+npm run test
+```
+
 ## API documentation
 
 If a request fails, it returns an HTTP status of value 500 with an error message (status will be replaced by more adapted ones in the future).
