@@ -5,6 +5,7 @@
   "main": "app.js",
   "scripts": {
     "test": "set NODE_ENV=test&& mocha --require @babel/register --timeout 10000",
+    "testci": "mocha --exit --require @babel/register --timeout 10000",
     "start": "set NODE_ENV=dev&& nodemon app.js --exec babel-node --",
     "heroku-postbuild": "mkdir src $PWD/uploads && cp -r app.js libs posts users src && ./node_modules/.bin/babel src -d build && rm -rf src"
   },

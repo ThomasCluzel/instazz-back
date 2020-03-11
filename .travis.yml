@@ -20,7 +20,7 @@ jobs:
       name: "test API"
       script:
         - mkdir -p $UPLOAD_PATH_TEST
-        - npm run test
+        - npm run testci
     - stage: deploy
       name: "Deploy to heroku"
       script: skip
