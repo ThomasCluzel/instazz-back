@@ -11,6 +11,20 @@ import userRouter from './users/routes';
 import cors from "cors";
 
 dotenv.config();
+// get the current environment
+var env = process.env.NODE_ENV
+
+if(!env){
+    env = "DEV";
+}
+
+// convert to uppercase
+var envString = env.toUpperCase()
+
+// access the environment variables for this environment
+process.env.MONGO = process.env['MONGO_' + envString]
+process.env.PORT = process.env['PORT_' + envString]
+process.env.UPLOAD_PATH = process.env['UPLOAD_PATH_' + envString]
 
 // Server express.js
 const app = express();

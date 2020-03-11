@@ -17,6 +17,8 @@ import {createJWToken} from "../libs/auth"
 dotenv.config()
 
 process.env.MONGO = process.env.MONGO_TEST;
+process.env.PORT = process.env.PORT_TEST
+process.env.UPLOAD_PATH = process.env.UPLOAD_PATH_TEST
 
 chai.use(chaiHttp);
 chai.use(chaiDateTime)
@@ -85,7 +87,7 @@ describe("hooks", function(){
                         pseudo: user2.pseudo,
                         password: hashedPassword1})
                     .then((res) => {
-                        console.log("Database set")
+                        //console.log("Database set")
                         resolve()
                     })
                     .catch((err) => {
@@ -103,7 +105,7 @@ describe("hooks", function(){
                             reject(err)
                             return;
                         }
-                        console.log("Database cleaned")
+                        //console.log("Database cleaned")
         
                         resolve();
                     })
@@ -116,6 +118,7 @@ describe("hooks", function(){
                     .set("Content-Type", "application/json")
                     .send({...user4})
                     .then((res) => {
+                        console.log(res.body)
                         res.should.have.status(200);
                         res.body.should.be.a('object');
                         res.body.should.have.property("token")
@@ -147,9 +150,10 @@ describe("hooks", function(){
                     .set("Content-Type", "application/json")
                     .send({...user2})
                     .then((res) => {
-                            res.should.have.status(500);
-                            
-                            should.not.exist(res.body.pseudo)
+                        console.log(res.body)
+                        res.should.have.status(500);
+                        
+                        should.not.exist(res.body.pseudo)
                     })
                     .catch((err) => {
                         throw err;
@@ -167,7 +171,7 @@ describe("hooks", function(){
                         password: hashedPassword2
                     })
                     .then((res) => {
-                        console.log("Database set")
+                        //console.log("Database set")
                         resolve()
                     })
                     .catch((err) => {
@@ -185,7 +189,7 @@ describe("hooks", function(){
                             reject(err)
                             return;
                         }
-                        console.log("Database cleaned")
+                        //console.log("Database cleaned")
         
                         resolve();
                     })
@@ -201,6 +205,7 @@ describe("hooks", function(){
                         password: user4.password
                     })
                     .then((res) => {
+                        console.log(res.body)
                         res.should.have.status(200);
                         res.body.should.be.a('object');
                         res.body.should.have.property("token")
@@ -222,9 +227,10 @@ describe("hooks", function(){
                         password: user4.password + "NotEqual",
                     })
                     .then( (res) => {
-                            res.should.have.status(500);
-                            
-                            should.not.exist(res.body.pseudo);
+                        console.log(res.body)
+                        res.should.have.status(500);
+                        
+                        should.not.exist(res.body.pseudo);
                     })
                     .catch((err) => {
                         throw err;
@@ -262,7 +268,7 @@ describe("hooks", function(){
                             },
                             maxAge: 3600
                         });
-                        console.log("Database set")
+                        //console.log("Database set")
 
                         resolve()
                     }
@@ -281,7 +287,7 @@ describe("hooks", function(){
                             reject(err)
                             return;
                         }
-                        console.log("Database cleaned")
+                        //console.log("Database cleaned")
         
                         resolve();
                     })
@@ -293,6 +299,7 @@ describe("hooks", function(){
                     .get("/api/v1/users/")
                     .set("Authorization", adminToken)
                     .then( (res) => {      
+                        console.log(res.body)
                         res.should.have.status(200);
                         res.body.should.be.a('object');
                         const users = res.body.users;
@@ -313,14 +320,15 @@ describe("hooks", function(){
                     .set("Authorization", adminToken)
                     .query({page: 2, per_page:2})
                     .then( (res) => {
-                            res.should.have.status(200);
-                            res.body.should.be.a('object');
-                            const users = res.body.users;
-                            res.body.users.should.be.a('array')
-                            users.length.should.equal(2);
-                            users[0].should.have.property("role")
-                            users[0].should.have.property("name")
-                            users[0].should.have.property("pseudo")
+                        console.log(res.body)
+                        res.should.have.status(200);
+                        res.body.should.be.a('object');
+                        const users = res.body.users;
+                        res.body.users.should.be.a('array')
+                        users.length.should.equal(2);
+                        users[0].should.have.property("role")
+                        users[0].should.have.property("name")
+                        users[0].should.have.property("pseudo")
                     })
                     .catch((err) => {
                         throw err;
@@ -332,6 +340,7 @@ describe("hooks", function(){
                     .get("/api/v1/users/")
                     .set("Authorization", userToken)
                     .then((res) => {
+                        console.log(res.body)
                         res.should.have.status(500);
                         
                         should.not.exist(res.body.users);
@@ -361,12 +370,12 @@ describe("hooks", function(){
         }
 
         const img1 = {
-            path: process.env.UPLOAD_TEST_PATH,
+            path: process.env.UPLOAD_PATH,
             contentType: "image/jpeg",
             filename: "nodeJS.jpg"
         }
         const img2 = {
-            path: process.env.UPLOAD_TEST_PATH,
+            path: process.env.UPLOAD_PATH,
             contentType: "image/png",
             filename: "react.png"
         }
@@ -438,13 +447,13 @@ describe("hooks", function(){
                             image: image2._id
                         })
 
-                        return fs.copyFile(path.join(path.resolve(__dirname), "resources/"+img1.filename), path.join(process.env.UPLOAD_TEST_PATH, img1.filename), (err) => {
+                        return fs.copyFile(path.join(path.resolve(__dirname), "resources/"+img1.filename), path.join(process.env.UPLOAD_PATH, img1.filename), (err) => {
                             if(err)
                                 throw err
-                            fs.copyFile(path.join(path.resolve(__dirname), "resources/"+img2.filename), path.join(process.env.UPLOAD_TEST_PATH, img2.filename), (err) =>{
+                            fs.copyFile(path.join(path.resolve(__dirname), "resources/"+img2.filename), path.join(process.env.UPLOAD_PATH, img2.filename), (err) =>{
                                 if(err)
                                     throw err
-                                console.log("Database set")
+                                //console.log("Database set")
 
                                 resolve()
                             })
@@ -480,6 +489,11 @@ describe("hooks", function(){
                         posts[0].image.should.have.property("filename")
                         posts[0].author.should.have.property("pseudo")
                         posts[0].should.have.property("imageData")
+
+                        posts.forEach(post => {
+                            post.imageData = "[data]"
+                        });
+                        console.log(res.body)
                     })
                     .catch((err) => {
                         throw err
@@ -501,6 +515,11 @@ describe("hooks", function(){
                         posts[0].image.should.have.property("filename")
                         posts[0].author.should.have.property("pseudo")
                         posts[0].should.have.property("imageData")
+
+                        posts.forEach(post => {
+                            post.imageData = "[data]"
+                        });
+                        console.log(res.body)
                     })
                     .catch((err) => {
                         throw err
@@ -527,7 +546,7 @@ describe("hooks", function(){
                             },
                             maxAge: 3600
                         });
-                        console.log("Database set")
+                        //console.log("Database set")
 
                         resolve()
                     }
@@ -548,30 +567,31 @@ describe("hooks", function(){
                     .set("Content-Type", "multipart/form-data")
                     .set("Authorization", user1Token)
                     .attach("imageData", fs.readFileSync(path.join(path.resolve(__dirname), "resources/"+post1.image.filename)), post1.image.filename)
-                    .send({
+                    .field({
                         description: post1.description,
                     })
                     .then((res) => {
+                        console.log(res.body)
                         res.should.have.status(200);
                         res.body.should.be.a('object');
                         res.body.should.have.property("description").eql(post1.description)
                         res.body.should.have.property("image")
-                        res.body.should.have.property("author").eql(post1.author)
-                        res.body.should.have.property("publication_date").eql(post1.publication_date);
+                        res.body.should.have.property("author")
+                        res.body.should.have.property("publication_date")
 
                         return Post.findOne({description: post1.description}).populate("author").populate("image")
-                        .then((res) => {
+                        .then((result) => {
                             result.should.be.a("object");
                             result.should.have.property("description").eql(post1.description)
                             result.should.have.property("image")
-                            result.image.should.have.property("filename").eql(post1.image.filename)
+                            result.image.should.have.property("filename")
                             result.image.should.have.property("contentType").eql(post1.image.contentType)
-                            result.image.should.have.property("path").eql(post1.image.path)
+                            result.image.should.have.property("path").eql(process.env.UPLOAD_PATH)
                             result.author.should.have.property("pseudo").eql(post1.pseudo)
-                            result.should.have.property("publication_date").eql(post1.publication_date);
+                            result.should.have.property("publication_date")
                             
                             let bitmap = fs.readFileSync(path.join(result.image.path, result.image.filename));
-                            imageBase64 = new Buffer.from(bitmap1).toString("base64");
+                            const imageBase64 = new Buffer.from(bitmap).toString("base64");
                             imageBase64.should.eql(imageBase64_1);
                         })
                         .catch((err) =>{
@@ -590,10 +610,11 @@ describe("hooks", function(){
                     .set("Content-Type", "multipart/form-data")
                     .set("Authorization", user1Token+"NotEqual")
                     .attach("imageData", fs.readFileSync(path.join(path.resolve(__dirname), "resources/"+post1.image.filename)), post1.image.filename)
-                    .send({
+                    .field({
                         description: post1.description,
                     })
                     .then( (res) => {
+                        console.log(res.body)
                         res.should.have.status(500);
                         should.not.exist(res.body.posts)
                     })
@@ -630,10 +651,10 @@ describe("hooks", function(){
                             image: image2._id,
                         })
 
-                        fs.copyFile(path.join(path.resolve(__dirname), "resources/"+img1.filename), path.join(process.env.UPLOAD_TEST_PATH, img1.filename), (err) => {
+                        fs.copyFile(path.join(path.resolve(__dirname), "resources/"+img1.filename), path.join(process.env.UPLOAD_PATH, img1.filename), (err) => {
                             if(err)
                                 throw err
-                            fs.copyFile(path.join(path.resolve(__dirname), "resources/"+img2.filename), path.join(process.env.UPLOAD_TEST_PATH, img2.filename), (err) =>{
+                            fs.copyFile(path.join(path.resolve(__dirname), "resources/"+img2.filename), path.join(process.env.UPLOAD_PATH, img2.filename), (err) =>{
                                 if(err)
                                     throw err
                                 user1Token = createJWToken({
@@ -645,7 +666,7 @@ describe("hooks", function(){
                                     },
                                     maxAge: 3600
                                 });
-                                console.log("Database set")
+                                //console.log("Database set")
 
                                 resolve()
                             })
@@ -679,6 +700,11 @@ describe("hooks", function(){
                         posts[0].image.should.have.property("filename").eql(post1.image.filename)
                         posts[0].author.should.have.property("pseudo").eql(post1.pseudo)
                         posts[0].should.have.property("imageData").eql(post1.image64)
+
+                        posts.forEach(post => {
+                            post.imageData = "[data]"
+                        });
+                        console.log(res.body)
                     })
                     .catch((err) => {
                         throw err
@@ -691,6 +717,7 @@ describe("hooks", function(){
                     .get("/api/v1/posts/myposts")
                     .set("Authorizarion", user1Token+"NotEqual")
                     .then( (res) => {
+                        console.log(res.body)
                         res.should.have.status(500);
                         
                         should.not.exist(res.body.posts);
@@ -707,14 +734,14 @@ describe("hooks", function(){
 
 function dropDatabasePromise(){
     return new Promise((resolve, reject) => {
-        fs.readdir(process.env.UPLOAD_TEST_PATH, (err, files) => {
+        fs.readdir(process.env.UPLOAD_PATH, (err, files) => {
             if(err){
                 console.error(err);
                 reject(err)
                 return;
             }
             files.map((file) => {
-                fs.unlinkSync(path.join(process.env.UPLOAD_TEST_PATH, file));
+                fs.unlinkSync(path.join(process.env.UPLOAD_PATH, file));
             })
 
             return Promise.all(files).then((res) => {
@@ -736,7 +763,7 @@ function dropDatabasePromise(){
                                 reject(err)
                                 return;
                             }
-                            console.log("Database cleaned")
+                            //console.log("Database cleaned")
                             resolve();
                         })
                     })

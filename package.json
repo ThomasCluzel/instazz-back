@@ -4,8 +4,8 @@
   "description": "Backend of the InstaZZ app of the course ZZ3-javascript-ecosystems",
   "main": "app.js",
   "scripts": {
-    "test": "mocha --require @babel/register --timeout 10000",
-    "start": "node_modules/.bin/nodemon app.js --exec babel-node --",
+    "test": "set NODE_ENV=test&& mocha --require @babel/register --timeout 10000",
+    "start": "set NODE_ENV=dev&& nodemon app.js --exec babel-node --",
     "heroku-postbuild": "mkdir src $PWD/uploads && cp -r app.js libs posts users src && ./node_modules/.bin/babel src -d build && rm -rf src"
   },
   "keywords": [

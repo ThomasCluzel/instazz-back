@@ -5,7 +5,6 @@ import User from "./model";
 //Create
 export async function createUser(body) {
     let user = [];
-    console.log(body);
     user.pseudo = body.pseudo;
     user.name = body.name;
     user.password = hashString(body.password)

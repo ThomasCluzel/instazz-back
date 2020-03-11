@@ -20,23 +20,32 @@ docker-compose -f docker-compose-mongo.yml up -d
 
 Required content of the ".env" file
 ```
+# Seed used to hash the JWT token
+JWT_SECRET=xxx
+
+#For dev environment
+
 # Database connection string
-MONGO=mongodb://<user>:<passwd>@<host>
+MONGO_DEV=mongodb://<user>:<passwd>@<host>
+
+# API port
+PORT_DEV=5000
+
+# Path where images should be uploaded (must exists)
+UPLOAD_PATH_DEV=/path
+
+#For test environment
 
 #Database connection string for tests
 MONGO_TEST=mongodb://<user>:<passwd>@<host>
 
-# API port
-PORT=5000
+# API Port during tests
+PORT_TEST=6000
 
-# Seed used to hash the JWT token
-JWT_SECRET=xxx
+# Path where images used during test should be uploaded (must exists). 
+They are deleted at the end of each test.
+UPLOAD_PATH_TEST=/path
 
-# Path where images should be uploaded (must exists)
-UPLOAD_PATH=/path
-
-# Path where images used during test should be uploaded (must exists). They are deleted at the end of each test.
-UPLOAD_TEST_PATH=/path
 ```
 
 ## Some useful commands
