@@ -23,7 +23,8 @@ var envString = env.toUpperCase()
 
 // access the environment variables for this environment
 process.env.MONGO = process.env['MONGO_' + envString]
-process.env.PORT = process.env['PORT_' + envString]
+if(envString !== 'PROD')
+    process.env.PORT = process.env['PORT_' + envString]
 process.env.UPLOAD_PATH = process.env['UPLOAD_PATH_' + envString]
 
 // Server express.js

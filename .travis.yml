@@ -18,7 +18,9 @@ jobs:
   include:
     - stage: test
       name: "test API"
-      script: npm run test
+      script:
+        - mkdir -p $UPLOAD_PATH_TEST
+        - npm run testci
     - stage: deploy
       name: "Deploy to heroku"
       script: skip
@@ -27,4 +29,3 @@ jobs:
         api_key: $HEROKU_AUTH_TOKEN
         app: instazzapi
         strategy: git
-
