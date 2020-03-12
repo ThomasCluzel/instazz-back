@@ -13,6 +13,7 @@ import User from '../users/model';
 import {Post, Image} from '../posts/model';
 import server from "../app";
 import {createJWToken} from "../libs/auth"
+import { Resolver } from "dns";
 
 dotenv.config()
 
@@ -369,13 +370,11 @@ describe("hooks", function(){
             role: "user"
         }
 
-        const img1 = {
-            path: process.env.UPLOAD_PATH,
+        let img1 = {
             contentType: "image/jpeg",
             filename: "nodeJS.jpg"
         }
-        const img2 = {
-            path: process.env.UPLOAD_PATH,
+        let img2 = {
             contentType: "image/png",
             filename: "react.png"
         }
@@ -412,6 +411,9 @@ describe("hooks", function(){
             let bitmap2 = fs.readFileSync(path.join(path.resolve(__dirname), "resources/" + img2.filename));
             imageBase64_2 = new Buffer.from(bitmap2).toString("base64");
 
+            img1.imageData = imageBase64_1;
+            img2.imageData = imageBase64_2;
+
             post1.image64 = imageBase64_1;
             post2.image64 = imageBase64_2;
             post3.image64 = imageBase64_2;
@@ -447,6 +449,9 @@ describe("hooks", function(){
                             image: image2._id
                         })
 
+                        resolve()
+
+                        /*
                         return fs.copyFile(path.join(path.resolve(__dirname), "resources/"+img1.filename), path.join(process.env.UPLOAD_PATH, img1.filename), (err) => {
                             if(err)
                                 throw err
@@ -458,6 +463,7 @@ describe("hooks", function(){
                                 resolve()
                             })
                         })
+                        */
                     }
                     catch(err){
                         console.error(err)
@@ -512,7 +518,6 @@ describe("hooks", function(){
                         posts.length.should.equal(1);
                         posts[0].should.have.property("publication_date");
                         posts[0].should.have.property("description")
-                        posts[0].image.should.have.property("filename")
                         posts[0].author.should.have.property("pseudo")
                         posts[0].should.have.property("imageData")
 
@@ -586,13 +591,9 @@ describe("hooks", function(){
                             result.should.have.property("image")
                             result.image.should.have.property("filename")
                             result.image.should.have.property("contentType").eql(post1.image.contentType)
-                            result.image.should.have.property("path").eql(process.env.UPLOAD_PATH)
                             result.author.should.have.property("pseudo").eql(post1.pseudo)
                             result.should.have.property("publication_date")
-                            
-                            let bitmap = fs.readFileSync(path.join(result.image.path, result.image.filename));
-                            const imageBase64 = new Buffer.from(bitmap).toString("base64");
-                            imageBase64.should.eql(imageBase64_1);
+                            result.image.imageData.should.eql(imageBase64_1);
                         })
                         .catch((err) =>{
                             throw err
@@ -630,6 +631,7 @@ describe("hooks", function(){
             let user1Token;
 
             before(function(){
+
                 return new Promise(async (resolve, reject) => {
                         try{
                         const u1 = await User.create({...user1});
@@ -651,6 +653,18 @@ describe("hooks", function(){
                             image: image2._id,
                         })
 
+                        user1Token = createJWToken({
+                            sessionData:{ 
+                                _id: u1._id,
+                                pseudo: u1.pseudo,
+                                name: u1.name,
+                                role: u1.role
+                            },
+                            maxAge: 3600
+                        });
+
+                        resolve()
+                        /*
                         fs.copyFile(path.join(path.resolve(__dirname), "resources/"+img1.filename), path.join(process.env.UPLOAD_PATH, img1.filename), (err) => {
                             if(err)
                                 throw err
@@ -671,6 +685,7 @@ describe("hooks", function(){
                                 resolve()
                             })
                         })
+                        */
                     }
                     catch(err){
                         console.error(err)

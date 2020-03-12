@@ -5,10 +5,10 @@ const Schema = mongoose.Schema;
 
 //TODO: Change mongoDB schema to JSON Object
 var ImageSchema = new Schema({
-  path: {
+  /*path: {
     type: String,
     required: true
-  },
+  },*/
   contentType: {
     type: String,
     required: true
@@ -17,6 +17,10 @@ var ImageSchema = new Schema({
     type: String,
     required: true,
     unique: true
+  },
+  imageData : {
+    type: String,
+    required: true
   }
 });
 

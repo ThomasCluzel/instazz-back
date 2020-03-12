@@ -5,6 +5,8 @@ import bodyParser from "body-parser";
 import multer from "multer";
 import * as service from './services';
 import { verifyJWT_MW, verifyJWT_Connected, verifyJWT_isConnected, verifyJWT_isRightUser } from "../libs/auth"
+import fs from "fs";
+import path from "path"
 
 const postRouter = express.Router();
 postRouter.use(bodyParser.json());
@@ -75,9 +77,13 @@ postRouter.get("/myposts", verifyJWT_isConnected, (req, res) => {
 postRouter.post("/", verifyJWT_isConnected, upload.single("imageData"), (req, res) => {
     if(req.body && !req.body._id && req.file && req.user){
         let image = [];
-        image.path = process.env.UPLOAD_PATH;
+        //image.path = process.env.UPLOAD_PATH;
         image.contentType = req.file.mimetype;
         image.filename = fileName;
+        const pathImage = path.join(process.env.UPLOAD_PATH, fileName)
+        let bitmap = fs.readFileSync(pathImage);
+        image.imageData = new Buffer.from(bitmap).toString("base64");
+
         service.createPost(req.user, req.body, image).then(
             post => {
                 res.status(200).json(post);

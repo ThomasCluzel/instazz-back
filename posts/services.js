@@ -1,8 +1,8 @@
 // Services for posts
 
 import {Image, Post} from "./model";
-import path, { dirname } from "path";
-import fs from "fs";
+//import path, { dirname } from "path";
+//import fs from "fs";
 
 // Create
 export async function createPost(user, post, img) {
@@ -25,16 +25,15 @@ export async function getByPage(page, per_page, user) {
     //Lean permet d'obtenir un objet pur Javascript
     let result = await Post.find(condition)
         .sort({"publication_date": "desc"})
-        .populate({path: "image", select: "path filename"})
+        .populate({path: "image", select: "filename imageData"})
         .populate("author", "pseudo")
         .skip(start)
         .limit(per_page)
         .lean();
     result.forEach(post => { 
-        const pathImage = path.join(post.image.path, post.image.filename)
-        let bitmap = fs.readFileSync(pathImage);
-        post.imageData = new Buffer.from(bitmap).toString("base64");
-        post.path = null
+        //Keep old strucuture
+        post.imageData = post.image.imageData;
+        post.image.imageData = null;
         return post;
     });
     return result;
